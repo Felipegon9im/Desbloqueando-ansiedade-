@@ -1,1 +1,370 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Atendente AI - IA Magnética</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for chat messages */
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-track {
+            background: #e2e8f0; /* light gray */
+            border-radius: 10px;
+        }
+        .dark #chat-messages::-webkit-scrollbar-track {
+            background: #4a5568; /* dark gray */
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #a0aec0; /* medium gray */
+            border-radius: 10px;
+        }
+        .dark #chat-messages::-webkit-scrollbar-thumb {
+            background: #718096; /* darker gray */
+        }
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* hover color */
+        }
+        .dark #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #9fa6b2;
+        }
+
+        /* Custom bubble tail for sender (user) */
+        .bubble-user::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: -6px; /* Adjust as needed */
+            width: 0;
+            height: 0;
+            border-bottom: 6px solid #4f46e5; /* Tailwind indigo-600 */
+            border-left: 6px solid transparent;
+            border-right: 0px solid transparent;
+            border-top: 0px solid transparent;
+        }
+        .dark .bubble-user::after {
+            border-bottom: 6px solid #4f46e5; /* Tailwind indigo-600 */
+        }
+
+        /* Custom bubble tail for receiver (AI) */
+        .bubble-ai::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -6px; /* Adjust as needed */
+            width: 0;
+            height: 0;
+            border-bottom: 6px solid #e5e7eb; /* Tailwind gray-200 */
+            border-right: 6px solid transparent;
+            border-left: 0px solid transparent;
+            border-top: 0px solid transparent;
+        }
+        .dark .bubble-ai::after {
+            border-bottom: 6px solid #4b5563; /* Tailwind gray-600 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+    <div class="flex flex-col h-screen antialiased text-gray-800 dark:text-gray-200 font-inter p-2 sm:p-4">
+        <div class="flex flex-col flex-auto h-full rounded-xl bg-white dark:bg-gray-800 shadow-xl overflow-hidden">
+            <!-- FIXED CHAT HEADER (photo, name, phrase) -->
+            <div class="p-2 sm:p-3 text-center border-b border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center flex-shrink-0">
+                <img
+                    src="https://raw.githubusercontent.com/Felipegon9im/Chat-Ai/refs/heads/main/IMG_1539.jpeg"
+                    alt="Foto de Perfil de Felipe Gondim"
+                    class="w-14 h-14 rounded-full object-cover mb-1 border-2 border-indigo-500 shadow-md"
+                    onerror="this.onerror=null; this.src='https://placehold.co/64x64/cccccc/333333?text=FG';"
+                >
+                <h1 class="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white">Felipe Gondim</h1>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    <em class="italic text-gray-700 dark:text-gray-300">Insiste. Resiste. Conquista. 🏆</em>
+                </p>
+            </div>
+
+            <!-- MAIN CHAT CONTENT AREA (messages + input form) -->
+            <div class="flex flex-col flex-grow min-h-0">
+                <!-- Messages Display Area -->
+                <div
+                    id="chat-messages"
+                    class="flex-grow overflow-y-auto p-4 space-y-4 relative"
+                    style="background-image: url('https://raw.githubusercontent.com/Felipegon9im/Chat-Ai/refs/heads/main/IMG_1963.png'); background-size: cover; background-position: center; background-repeat: no-repeat;"
+                >
+                    <!-- Overlay para melhorar a leitura do texto sobre a imagem de fundo -->
+                    <div class="absolute inset-0 bg-black opacity-20 dark:opacity-40 rounded-lg"></div>
+                    <!-- Mensagens do chat serão inseridas dinamicamente aqui -->
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chat-form" class="flex p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+                    <input
+                        type="text"
+                        id="user-input"
+                        placeholder="Digite seu nome..."
+                        class="flex-grow focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300 shadow-inner"
+                    />
+                    <button
+                        type="submit"
+                        id="send-button"
+                        class="ml-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                        </svg>
+                    </button>
+                </form>
+                <div id="loading-indicator" class="text-center text-sm text-gray-500 dark:text-gray-400 py-2 hidden">
+                    Atendente digitando...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==============================================
+        // DADOS DO CURSO
+        // Estes dados serão usados para preencher a seção de "Recursos do Curso" e para instruir a IA.
+        // ==============================================
+        const courseFeatures = {
+            "Acesso Vitalício ao Conteúdo Completo": "Estude no seu ritmo, quando quiser, para sempre.",
+            "Uso Ilimitado da IA por 15 Meses": "Ferramenta para criar vídeos virais, usando recursos como o Google.",
+            "Aprenda a Criar Vídeos Virais": "Módulos dedicados a estratégias e técnicas de viralização de conteúdo.",
+            "Aprenda a Vender Seus Vídeos": "Transforme visualizações em dinheiro, com métodos comprovados de monetização.",
+            "Desbloqueie o Potencial da IA": "Saiba como usar a inteligência artificial a seu favor na criação de conteúdo.",
+            "Curso IA Magnética": "O caminho para dominar a IA na criação e monetização de vídeos."
+        };
+
+        // Variáveis de estado do chat
+        let chatStep = 0; // 0: pedindo nome, 1: chat normal
+        let userName = '';
+
+        // GLOBAL UI ELEMENT REFERENCES (declared here, initialized in window.onload)
+        let chatMessages;
+        let chatForm;
+        let userInput;
+        let sendButton;
+        let loadingIndicator;
+        let courseFeaturesList; // Also global as it's used in displayCourseFeatures
+
+        // Funções para manipular a UI e a lógica do chat
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function displayCourseFeatures() {
+            // Check if element exists (important for responsive layouts where it might be hidden)
+            if (courseFeaturesList) {
+                courseFeaturesList.innerHTML = '';
+                for (const item in courseFeatures) {
+                    const li = document.createElement('li');
+                    li.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600";
+                    li.innerHTML = `
+                        <span class="text-gray-800 dark:text-gray-100 text-sm font-medium text-left">${item}</span>
+                        <span class="text-indigo-600 dark:text-indigo-400 font-bold text-right mt-1 sm:mt-0 whitespace-nowrap">${courseFeatures[item]}</span>
+                    `;
+                    courseFeaturesList.appendChild(li);
+                }
+            } else {
+                console.warn("Element 'course-features-list' not found. It might be hidden on small screens.");
+            }
+        }
+
+        async function addMessage(sender, content, type = 'text', showTyping = true) {
+            // Ensure global references are used
+            if (!chatMessages) {
+                console.error("Element 'chat-messages' not found.");
+                return;
+            }
+
+            if (sender === 'ai' && showTyping) {
+                if (sendButton) sendButton.disabled = true;
+                if (userInput) userInput.disabled = true;
+                if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+                await sleep(1500); // Simula o tempo de "digitação" da IA
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            if (type === 'text') {
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = `relative max-w-[75%] px-4 py-2 rounded-2xl text-sm break-words z-10 ${ /* z-10 para ficar acima do overlay */
+                    sender === 'user'
+                        ? 'bg-indigo-600 text-white rounded-br-none bubble-user'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded-bl-none bubble-ai'
+                } shadow`;
+
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                if (urlRegex.test(content)) {
+                    bubbleDiv.innerHTML = content.replace(urlRegex, (url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-200 dark:text-blue-300 hover:underline font-semibold">${url}</a>`;
+                    });
+                } else {
+                    bubbleDiv.innerHTML = content;
+                }
+                messageDiv.appendChild(bubbleDiv);
+
+            } else if (type === 'video') {
+                const videoContainer = document.createElement('div');
+                videoContainer.className = `relative w-[200px] h-[356px] sm:w-[240px] sm:h-[426px] rounded-lg overflow-hidden shadow-lg z-10 ${sender === 'user' ? 'ml-auto' : 'mr-auto'}`;
+                videoContainer.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${content}?autoplay=1&controls=1&mute=1&playsinline=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                messageDiv.appendChild(videoContainer);
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if (sender === 'ai' && showTyping) {
+                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                if (sendButton) sendButton.disabled = false;
+                if (userInput) {
+                    userInput.disabled = false;
+                    userInput.focus(); // Foca no input para o próximo passo
+                }
+            }
+        }
+
+        function getCourseContext() {
+            let context = "Recursos do curso IA Magnética:\n";
+            for (const item in courseFeatures) {
+                context += `- ${item}: ${courseFeatures[item]}\n`;
+            }
+            return context;
+        }
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const userText = userInput.value.trim();
+            if (!userText) return;
+
+            addMessage('user', userText, 'text', false); // Mensagem do usuário não mostra "digitando"
+            userInput.value = '';
+
+            if (chatStep === 0) { // Still waiting for username
+                userName = userText;
+                chatStep = 1; // Transition to normal chat interaction
+                userInput.placeholder = "Pergunte sobre o curso..."; // Reset placeholder
+
+                // Building the organized list with HTML
+                const benefitsHtml = `
+                    <p class="mb-2">${userName}, vamos te entregar nossa estrutura pronta para lucrar com IA:</p>
+                    <ul class="list-none pl-0 space-y-1">
+                        <li class="flex items-center">✅ <span class="ml-2">Treinamento completo em vídeo aulas práticas, mostrando o passo a passo</span></li>
+                        <li class="flex items-center">🤖 <span class="ml-2">IA gratuita para gerar vídeos de forma automática</span></li>
+                        <li class="flex items-center">🧠 <span class="ml-2">Gerador de prompts PRO para criar vídeos profissionais com facilidade</span></li>
+                        <li class="flex items-center">📈 <span class="ml-2">Minha estratégia pronta para você começar a lucrar com IA em até 7 dias</span></li>
+                        <li class="flex items-center">🪜 <span class="ml-2">Método simples e direto — mesmo que você seja iniciante, é só seguir as instruções!</span></li>
+                    </ul>
+                `;
+                await addMessage('ai', benefitsHtml); // AI message with typing animation
+                await sleep(1000); // Pausa após os benefícios
+
+                await addMessage('ai', 'GC9ZuAMM334', 'video'); // AI video message with typing animation
+                await sleep(1000); // Pausa para o vídeo
+
+                await addMessage('ai', 'Se você está pronto pra viralizar clique neste link: https://pay.kiwify.com.br/HOcl3Dg?afid=HIal80Cy'); // AI message with typing animation
+
+            } else { // Normal AI interaction
+                try {
+                    const courseContext = getCourseContext();
+                    // UPDATED PROMPT: Added instruction to insist on clicking the link
+                    const prompt = `Você é um atendente de chat de inteligência artificial criado para fornecer informações sobre o curso "IA Magnética" e incentivar sua aquisição. Você mesmo é um exemplo do que o curso ensina.
+                    O curso "IA Magnética" oferece os seguintes benefícios e funcionalidades:
+                    ${courseContext}
+                    O usuário se chama ${userName}.
+                    O usuário disse: '${userText}'.
+                    Responda à pergunta do usuário de forma **concisa e direta**. Após responder, se for relevante, você pode brevemente mencionar como a IA ou o curso "IA Magnética" se relaciona ao tema, mas **evite parágrafos longos ou repetir a lista de benefícios**.
+                    **SEMPRE, SEMPRE, SEMPRE finalize suas respostas insistindo para que o usuário clique no link de compra.** Use frases como "Clique no link para viralizar de verdade!" ou "Não perca tempo, comece agora: [link]" ou "Sua jornada para o sucesso começa com um clique no link!"
+                    Sempre mantenha o tom entusiasmado e profissional.
+                    - Se a pergunta for sobre um recurso específico do curso, responda usando as informações fornecidas no contexto, de forma objetiva.
+                    - Se a pergunta for geral sobre o curso ("o que é o curso?"), resuma o curso como sendo para dominar IA na criação e monetização de vídeos, e que você é um exemplo disso.
+                    - Se a pergunta não estiver diretamente relacionada aos recursos do curso, tente dar uma resposta breve e então redirecionar o usuário para como o curso "IA Magnética" pode ajudá-lo de forma geral.
+                    - Não invente informações ou preços.
+                    - Sempre incentive o usuário a adquirir o curso.
+                    - O link de compra do curso é: https://pay.kiwify.com.br/HOcl3Dg?afid=HIal80Cy. Você DEVE mencioná-lo de forma insistente no final de cada resposta.`;
+
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    // ####################################################################
+                    // ATENÇÃO: SUA CHAVE DE API REAL DO GOOGLE GEMINI FOI INSERIDA AQUI!
+                    const apiKey = "AIzaSyD-RemdW1m1T5863zBJo6D_H97dih5nT0I";
+                    // ####################################################################
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    // Mostrar indicador antes de chamar a API
+                    if (sendButton) sendButton.disabled = true;
+                    if (userInput) userInput.disabled = true;
+                    if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+                    await sleep(1000); // Pequena pausa para o "digitando" antes da resposta da API real
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    // Esconder indicador e habilitar input/botão após receber a resposta
+                    if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                    if (sendButton) sendButton.disabled = false;
+                    if (userInput) {
+                        userInput.disabled = false;
+                        userInput.focus();
+                    }
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const aiText = result.candidates[0].content.parts[0].text;
+                        addMessage('ai', aiText, 'text', false); // Already showed/hid typing above
+                    } else {
+                        addMessage('ai', 'Desculpe, não consegui entender sua solicitação. Poderia repetir ou perguntar de outra forma?', 'text', false);
+                        console.error("Unexpected API response structure:", result);
+                    }
+                } catch (error) {
+                    console.error("Erro ao comunicar com a AI:", error);
+                    addMessage('ai', 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.', 'text', false);
+                } finally {
+                    if (sendButton) sendButton.disabled = false;
+                    if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                    if (userInput) {
+                        userInput.disabled = false;
+                        userInput.focus();
+                    }
+                }
+            }
+        }
+
+        // Initial setup on window load - Introduction sequence
+        window.onload = async () => {
+            // Get UI element references HERE, when the DOM is ready
+            chatMessages = document.getElementById('chat-messages');
+            chatForm = document.getElementById('chat-form');
+            userInput = document.getElementById('user-input');
+            sendButton = document.getElementById('send-button');
+            loadingIndicator = document.getElementById('loading-indicator');
+            courseFeaturesList = document.getElementById('course-features-list');
+
+            displayCourseFeatures(); // Display course features (sidebar section)
+
+            // Add event listener for the chat form
+            if (chatForm) {
+                chatForm.addEventListener('submit', handleChatSubmit);
+            }
+
+            // Start the message sequence with typing animation
+            await addMessage('ai', '🚀 Vou te mostrar o caminho pra viralizar de verdade…');
+            await sleep(500); // Pause between messages
+            await addMessage('ai', 'Mas antes, me diz: qual é o seu nome? 🙂');
+        };
+    </script>
+</body>
+</html>
